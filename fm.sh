@@ -21,9 +21,21 @@ while true; do
     # 2. Display the UI
     display_ui
 
-    # 3. Get user input
-    echo -e "${COLOR_PROMPT}Actions: [num] to navigate, (v)iew, (e)dit, (c)opy, (m)ove, (d)elete, (h)elp, (q)uit${COLOR_RESET}"
-    read -p "Your choice: " -r input
+    # 3. Get user input with improved UI/UX
+    echo
+    echo -e "${COLOR_PROMPT}Available Actions:${COLOR_RESET}"
+    echo -e "  [num]   - Navigate into item"
+    echo -e "  v [num] - View item"
+    echo -e "  e [num] - Edit item"
+    echo -e "  c [num] - Copy item"
+    echo -e "  m [num] - Move item"
+    echo -e "  d [num] - Delete item"
+    echo -e "  h       - Help"
+    echo -e "  q       - Quit"
+    echo
+    read -e -p "$(echo -e "${COLOR_PROMPT}Enter command or number: ${COLOR_RESET}")" -r input
+    input="${input//[$'\t\r\n']}"  # Trim whitespace
+    
 
     # 4. Parse the input
     command=$(echo "$input" | cut -d' ' -f1)
