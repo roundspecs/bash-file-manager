@@ -31,6 +31,8 @@ function display_help() {
     echo "  c [num]     - Copy the selected file/directory."
     echo "  m [num]     - Move/Rename the selected file/directory."
     echo "  d [num]     - Delete the selected file/directory (with confirmation)."
+    echo "  n           - Create new file/directory."
+    echo "  r [num]     - Rename file/directory."
     echo "  h           - Show this help menu."
     echo "  q           - Quit the file manager."
     echo

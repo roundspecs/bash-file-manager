@@ -30,6 +30,8 @@ while true; do
     echo -e "  c [num] - Copy item"
     echo -e "  m [num] - Move item"
     echo -e "  d [num] - Delete item"
+    echo "  n           - Create new file/directory."
+    echo "  r [num]     - Rename file/directory."
     echo -e "  h       - Help"
     echo -e "  q       - Quit"
     echo
@@ -41,7 +43,12 @@ while true; do
     command=$(echo "$input" | cut -d' ' -f1)
     index=$(echo "$input" | cut -d' ' -f2)
 
-    # 5. Process the command
+    if [[ "$command" == "n" || "$command" == "new" ]] && [[ -n "$index" ]]; then
+        echo -e "${COLOR_ERROR}Error: Create command doesn't accept arguments. Just type 'n'.${COLOR_RESET}"
+        sleep 1.5
+        continue
+    fi
+       # 5. Process the command
     case "$command" in
         q|quit|exit)
             echo "Exiting File Manager. Goodbye!"
@@ -49,6 +56,9 @@ while true; do
             ;;
         h|help)
             display_help
+            ;;
+        n|new)
+            create_item
             ;;
         *)
             # Handle commands that require an index (like 'v 5' or just '5')
@@ -58,7 +68,7 @@ while true; do
             fi
 
             # Validate index
-            if ! [[ "$index" =~ ^[0-9]+$ && "$index" -lt "${#items[@]}" ]]; then
+            if [[ "$command" != "" ]] && ! [[ "$index" =~ ^[0-9]+$ && "$index" -lt "${#items[@]}" ]]; then
                 echo -e "${COLOR_ERROR}Error: Invalid number.${COLOR_RESET}"
                 sleep 1.5
                 continue
@@ -71,6 +81,7 @@ while true; do
                 v|view) view_item "$selected_item" ;;
                 e|edit) edit_item "$selected_item" ;;
                 d|delete) delete_item "$selected_item" ;;
+                r|rename) rename_item "$selected_item" ;;
                 c|copy) copy_item "$selected_item" ;;
                 m|move) move_item "$selected_item" ;;
                 *)
