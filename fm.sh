@@ -30,8 +30,8 @@ while true; do
     echo -e "  c [num] - Copy item"
     echo -e "  m [num] - Move item"
     echo -e "  d [num] - Delete item"
-    echo "  n           - Create new file/directory."
-    echo "  r [num]     - Rename file/directory."
+    echo "  n [num]    - Create new file/directory."
+    echo "  r [num]    - Rename file/directory."
     echo -e "  h       - Help"
     echo -e "  q       - Quit"
     echo
