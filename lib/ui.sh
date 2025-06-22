@@ -30,7 +30,7 @@ function display_help() {
     echo "  e [num]     - Edit the selected file using '$EDITOR'."
     echo "  c [num]     - Copy the selected file/directory."
     echo "  m [num]     - Move/Rename the selected file/directory."
-    echo "  d [num]     - Delete the selected file/directory (with confirmation)."
+    echo "  d [num]     - Delete the selected file/directory."
     echo "  n           - Create new file/directory."
     echo "  r [num]     - Rename file/directory."
     echo "  h           - Show this help menu."

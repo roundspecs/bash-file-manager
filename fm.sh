@@ -38,17 +38,11 @@ while true; do
     read -e -p "$(echo -e "${COLOR_PROMPT}Enter command or number: ${COLOR_RESET}")" -r input
     input="${input//[$'\t\r\n']}"  # Trim whitespace
     
-
     # 4. Parse the input
     command=$(echo "$input" | cut -d' ' -f1)
     index=$(echo "$input" | cut -d' ' -f2)
 
-    if [[ "$command" == "n" || "$command" == "new" ]] && [[ -n "$index" ]]; then
-        echo -e "${COLOR_ERROR}Error: Create command doesn't accept arguments. Just type 'n'.${COLOR_RESET}"
-        sleep 1.5
-        continue
-    fi
-       # 5. Process the command
+    # 5. Process the command
     case "$command" in
         q|quit|exit)
             echo "Exiting File Manager. Goodbye!"
@@ -56,9 +50,6 @@ while true; do
             ;;
         h|help)
             display_help
-            ;;
-        n|new)
-            create_item
             ;;
         *)
             # Handle commands that require an index (like 'v 5' or just '5')
@@ -68,7 +59,7 @@ while true; do
             fi
 
             # Validate index
-            if [[ "$command" != "" ]] && ! [[ "$index" =~ ^[0-9]+$ && "$index" -lt "${#items[@]}" ]]; then
+            if ! [[ "$index" =~ ^[0-9]+$ && "$index" -lt "${#items[@]}" ]]; then
                 echo -e "${COLOR_ERROR}Error: Invalid number.${COLOR_RESET}"
                 sleep 1.5
                 continue
@@ -81,7 +72,18 @@ while true; do
                 v|view) view_item "$selected_item" ;;
                 e|edit) edit_item "$selected_item" ;;
                 d|delete) delete_item "$selected_item" ;;
-                r|rename) rename_item "$selected_item" ;;
+                # In the main case statement (after 'delete' case)
+                n|new)
+                create_item
+                ;;
+                r|rename)
+                if [[ "$index" =~ ^[0-9]+$ && "$index" -lt "${#items[@]}" ]]; then
+                rename_item "${items[$index]}"
+                else
+                echo -e "${COLOR_ERROR}Error: Invalid selection for rename.${COLOR_RESET}"
+                sleep 1.5
+    fi
+    ;;
                 c|copy) copy_item "$selected_item" ;;
                 m|move) move_item "$selected_item" ;;
                 *)
