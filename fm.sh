@@ -82,8 +82,8 @@ while true; do
                 else
                 echo -e "${COLOR_ERROR}Error: Invalid selection for rename.${COLOR_RESET}"
                 sleep 1.5
-    fi
-    ;;
+                fi
+                ;;
                 c|copy) copy_item "$selected_item" ;;
                 m|move) move_item "$selected_item" ;;
                 *)
