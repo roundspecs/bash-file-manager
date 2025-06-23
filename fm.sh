@@ -30,7 +30,7 @@ while true; do
     echo -e "  c [num] - Copy item"
     echo -e "  m [num] - Move item"
     echo -e "  d [num] - Delete item"
-    echo "  n [num]    - Create new file/directory."
+    echo "  n          - Create new file/directory."
     echo "  r [num]    - Rename file/directory."
     echo -e "  h       - Help"
     echo -e "  q       - Quit"
@@ -51,6 +51,9 @@ while true; do
         h|help)
             display_help
             ;;
+        n|new)
+        create_item
+        ;;
         *)
             # Handle commands that require an index (like 'v 5' or just '5')
             if [[ "$command" =~ ^[0-9]+$ ]]; then
@@ -72,10 +75,6 @@ while true; do
                 v|view) view_item "$selected_item" ;;
                 e|edit) edit_item "$selected_item" ;;
                 d|delete) delete_item "$selected_item" ;;
-                # In the main case statement (after 'delete' case)
-                n|new)
-                create_item
-                ;;
                 r|rename)
                 if [[ "$index" =~ ^[0-9]+$ && "$index" -lt "${#items[@]}" ]]; then
                 rename_item "${items[$index]}"
