@@ -1,6 +1,3 @@
-# lib/actions.sh
-# Action handler functions for Bash FM
-
 function navigate_to() {
     local item="$1"
     if [[ -d "$item" ]]; then
@@ -45,7 +42,7 @@ function delete_item() {
 function copy_item() {
     local item="$1"
     read -p "Enter destination path for copy: " -r dest
-    # The -i flag prompts for overwrite, -r is recursive for directories
+
     cp -irv "$item" "$dest" && echo "Copied '$item' to '$dest'." || echo -e "${COLOR_ERROR}Error copying item.${COLOR_RESET}"
     sleep 2
 }
@@ -65,29 +62,28 @@ function create_item() {
 
     read -p "Enter name/path: " path
 
-    # Handle WSL Windows paths warning
     if [[ "$path" == /mnt/[a-z]* ]]; then
         echo -e "${COLOR_ERROR}Warning: Modifying Windows files from WSL.${COLOR_RESET}"
     fi
 
     case "$type_choice" in
-        1)
-            if [ -e "$path" ]; then
-                echo -e "${COLOR_ERROR}Error: '$path' already exists.${COLOR_RESET}"
-            else
-                touch "$path" && echo -e "Created file: ${COLOR_FILE}$path${COLOR_RESET}"
-            fi
-            ;;
-        2)
-            if [ -d "$path" ]; then
-                echo -e "${COLOR_ERROR}Error: Directory '$path' already exists.${COLOR_RESET}"
-            else
-                mkdir -p "$path" && echo -e "Created directory: ${COLOR_DIR}$path${COLOR_RESET}/"
-            fi
-            ;;
-        *)
-            echo -e "${COLOR_ERROR}Invalid choice.${COLOR_RESET}"
-            ;;
+    1)
+        if [ -e "$path" ]; then
+            echo -e "${COLOR_ERROR}Error: '$path' already exists.${COLOR_RESET}"
+        else
+            touch "$path" && echo -e "Created file: ${COLOR_FILE}$path${COLOR_RESET}"
+        fi
+        ;;
+    2)
+        if [ -d "$path" ]; then
+            echo -e "${COLOR_ERROR}Error: Directory '$path' already exists.${COLOR_RESET}"
+        else
+            mkdir -p "$path" && echo -e "Created directory: ${COLOR_DIR}$path${COLOR_RESET}/"
+        fi
+        ;;
+    *)
+        echo -e "${COLOR_ERROR}Invalid choice.${COLOR_RESET}"
+        ;;
     esac
     sleep 1.5
 }
@@ -102,7 +98,6 @@ function rename_item() {
 
     read -p "Enter new name/path: " new_path
 
-    # WSL path warning
     if [[ "$old_path" == /mnt/[a-z]* || "$new_path" == /mnt/[a-z]* ]]; then
         echo -e "${COLOR_ERROR}Warning: Modifying Windows files from WSL.${COLOR_RESET}"
     fi

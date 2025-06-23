@@ -1,16 +1,12 @@
-# UI and display functions for Bash FM
-
-# This function expects a global array named 'items' to be set.
 function display_ui() {
     clear
     echo -e "${COLOR_HEADER}--- Bash File Manager ---${COLOR_RESET}"
     echo -e "Current Directory: ${COLOR_HEADER}$(pwd)${COLOR_RESET}"
     echo
 
-    # Display the items with numbers
     for i in "${!items[@]}"; do
         item_path="${items[$i]}"
-        # Check if it's a directory or file to apply color
+
         if [[ -d "$item_path" ]]; then
             echo -e "  $i\t${COLOR_DIR}${item_path}/${COLOR_RESET}"
         else
