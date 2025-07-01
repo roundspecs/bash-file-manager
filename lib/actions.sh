@@ -209,7 +209,9 @@ function search_items() {
     echo -e "  2. Search by name (recursive)"
     echo -e "  3. Search by content (files only)"
     echo -e "  4. Search by file type/extension"
-    read -p "Select search type (1-4): " search_type    read -p "Enter search term: " search_term
+    read -p "Select search type (1-4): " search_type
+
+    read -p "Enter search term: " search_term
 
     if [[ -z "$search_term" ]]; then
         echo -e "${COLOR_ERROR}Error: Search term cannot be empty.${COLOR_RESET}"
@@ -287,36 +289,49 @@ function sort_items() {
     echo -e "  5. Sort by date modified (oldest first)"
     echo -e "  6. Sort by date modified (newest first)"
     echo -e "  7. Sort by type (directories first)"
-    read -p "Select sort type (1-7): " sort_type
+    echo -e "  0. Reset to default"
+    read -p "Select sort type (0-7): " sort_type
 
     case "$sort_type" in
+    0)
+        # Reset sorting
+        export SORT_MODE=""
+        echo -e "${COLOR_HEADER}Sort reset to default.${COLOR_RESET}"
+        ;;
     1)
         # Sort by name A-Z
-        mapfile -t items < <(ls -1 | sort)
+        export SORT_MODE="name_asc"
+        echo -e "${COLOR_HEADER}Items will be sorted by name (A-Z).${COLOR_RESET}"
         ;;
     2)
         # Sort by name Z-A
-        mapfile -t items < <(ls -1 | sort -r)
+        export SORT_MODE="name_desc"
+        echo -e "${COLOR_HEADER}Items will be sorted by name (Z-A).${COLOR_RESET}"
         ;;
     3)
         # Sort by size (smallest first)
-        mapfile -t items < <(ls -1S -r)
+        export SORT_MODE="size_asc"
+        echo -e "${COLOR_HEADER}Items will be sorted by size (smallest first).${COLOR_RESET}"
         ;;
     4)
         # Sort by size (largest first)
-        mapfile -t items < <(ls -1S)
+        export SORT_MODE="size_desc"
+        echo -e "${COLOR_HEADER}Items will be sorted by size (largest first).${COLOR_RESET}"
         ;;
     5)
         # Sort by date modified (oldest first)
-        mapfile -t items < <(ls -1t -r)
+        export SORT_MODE="date_asc"
+        echo -e "${COLOR_HEADER}Items will be sorted by date (oldest first).${COLOR_RESET}"
         ;;
     6)
         # Sort by date modified (newest first)
-        mapfile -t items < <(ls -1t)
+        export SORT_MODE="date_desc"
+        echo -e "${COLOR_HEADER}Items will be sorted by date (newest first).${COLOR_RESET}"
         ;;
     7)
         # Sort by type (directories first)
-        mapfile -t items < <(ls -1 --group-directories-first 2>/dev/null || (ls -1 | grep '/$'; ls -1 | grep -v '/$'))
+        export SORT_MODE="type"
+        echo -e "${COLOR_HEADER}Items will be sorted by type (directories first).${COLOR_RESET}"
         ;;
     *)
         echo -e "${COLOR_ERROR}Invalid sort option.${COLOR_RESET}"
@@ -325,6 +340,115 @@ function sort_items() {
         ;;
     esac
     
-    echo -e "${COLOR_HEADER}Items sorted successfully.${COLOR_RESET}"
-    sleep 1
+    sleep 1.5
+}
+
+function apply_sort() {
+    local sort_mode="$1"
+    
+    if [[ -z "$sort_mode" ]]; then
+        return 0
+    fi
+    
+    case "$sort_mode" in
+    "name_asc")
+        mapfile -t sorted_items < <(printf '%s\n' "${items[@]:1}" | sort)
+        ;;
+    "name_desc")
+        mapfile -t sorted_items < <(printf '%s\n' "${items[@]:1}" | sort -r)
+        ;;
+    "size_asc")
+        mapfile -t sorted_items < <(ls -1Sr 2>/dev/null | grep -v '^total$' || printf '%s\n' "${items[@]:1}")
+        ;;
+    "size_desc")
+        mapfile -t sorted_items < <(ls -1S 2>/dev/null | grep -v '^total$' || printf '%s\n' "${items[@]:1}")
+        ;;
+    "date_asc")
+        mapfile -t sorted_items < <(ls -1tr 2>/dev/null | grep -v '^total$' || printf '%s\n' "${items[@]:1}")
+        ;;
+    "date_desc")
+        mapfile -t sorted_items < <(ls -1t 2>/dev/null | grep -v '^total$' || printf '%s\n' "${items[@]:1}")
+        ;;
+    "type")
+        if command -v ls --group-directories-first >/dev/null 2>&1; then
+            mapfile -t sorted_items < <(ls -1 --group-directories-first 2>/dev/null | grep -v '^total$')
+        else
+            # Fallback for systems without --group-directories-first
+            mapfile -t dirs < <(printf '%s\n' "${items[@]:1}" | while read -r item; do [[ -d "$item" ]] && echo "$item"; done | sort)
+            mapfile -t files < <(printf '%s\n' "${items[@]:1}" | while read -r item; do [[ -f "$item" ]] && echo "$item"; done | sort)
+            sorted_items=("${dirs[@]}" "${files[@]}")
+        fi
+        ;;
+    *)
+        return 1
+        ;;
+    esac
+    
+    # Rebuild items array with ".." at the beginning
+    items=(".." "${sorted_items[@]}")
+}
+
+# UI Functions
+function display_ui() {
+    clear
+    echo -e "${COLOR_HEADER}--- Bash File Manager ---${COLOR_RESET}"
+    echo -e "Current Directory: ${COLOR_HEADER}$(pwd)${COLOR_RESET}"
+    echo
+
+    for i in "${!items[@]}"; do
+        item_path="${items[$i]}"
+
+        if [[ -d "$item_path" ]]; then
+            echo -e "  $i\t${COLOR_DIR}${item_path}/${COLOR_RESET}"
+        elif [[ -f "$item_path" ]]; then
+            # Get file size in human readable format
+            if command -v stat >/dev/null 2>&1; then
+                # Use stat for better cross-platform compatibility
+                if [[ "$OSTYPE" == "darwin"* ]]; then
+                    # macOS stat format
+                    file_size=$(stat -f%z "$item_path" 2>/dev/null | numfmt --to=iec-i --suffix=B 2>/dev/null || stat -f%z "$item_path" 2>/dev/null || echo "0")
+                    # Get modification date for macOS
+                    file_date=$(stat -f%Sm -t "%Y-%m-%d %H:%M" "$item_path" 2>/dev/null || echo "Unknown")
+                else
+                    # Linux stat format
+                    file_size=$(stat -c%s "$item_path" 2>/dev/null | numfmt --to=iec-i --suffix=B 2>/dev/null || stat -c%s "$item_path" 2>/dev/null || echo "0")
+                    # Get modification date for Linux
+                    file_date=$(stat -c%y "$item_path" 2>/dev/null | cut -d'.' -f1 | sed 's/\([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\) \([0-9]\{2\}:[0-9]\{2\}\).*/\1 \2/' || echo "Unknown")
+                fi
+            else
+                # Fallback using ls
+                file_size=$(ls -lh "$item_path" 2>/dev/null | awk '{print $5}' || echo "0")
+                file_date=$(ls -l "$item_path" 2>/dev/null | awk '{print $6, $7, $8}' || echo "Unknown")
+            fi
+            
+            # Format the display with size and date
+            printf "  %s\t${COLOR_FILE}%-25s${COLOR_RESET} %8s  %s\n" "$i" "$item_path" "$file_size" "$file_date"
+        else
+            # Special files (links, etc.)
+            echo -e "  $i\t${COLOR_FILE}${item_path}${COLOR_RESET}"
+        fi
+    done
+    echo
+}
+
+function display_help() {
+    clear
+    echo -e "${COLOR_HEADER}--- Help Menu ---${COLOR_RESET}"
+    echo "Enter a command followed by a number from the list."
+    echo
+    echo "  [num]       - Navigate into the directory with that number."
+    echo "  v [num]     - View the selected file using '$PAGER'."
+    echo "  e [num]     - Edit the selected file using '$EDITOR'."
+    echo "  c [num]     - Copy the selected file/directory."
+    echo "  m [num]     - Move/Rename the selected file/directory."
+    echo "  d [num]     - Delete the selected file/directory."
+    echo "  n           - Create new file/directory."
+    echo "  r [num]     - Rename file/directory."
+    echo "  s           - Search items (by name, content, or type)."
+    echo "  o           - Sort items (by name, size, date, type). Use 'o 0' to reset."
+    echo "  t           - Manage trash (restore/empty)."
+    echo "  h           - Show this help menu."
+    echo "  q           - Quit the file manager."
+    echo
+    read -n 1 -s -r -p "Press any key to continue..."
 }
